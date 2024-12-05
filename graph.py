@@ -5,6 +5,7 @@ from langgraph.graph.message import add_messages
 from langchain.tools import tool
 import pandas as pd
 
+# Define the state schema
 class EnergyForecastState(TypedDict):
     """State for the energy forecasting workflow"""
     messages: Annotated[list, add_messages]  # Chat history
@@ -13,10 +14,14 @@ class EnergyForecastState(TypedDict):
 
 def parameter_extraction_agent(state: EnergyForecastState):
     """Agent for extracting prediction parameters from user input"""
+
+    # Initialize LLM
     llm = OllamaLLM(model="phi3:medium")
-    
+
+    # Get last message from state
     last_message = state['messages'][-1]
-    
+
+    # Create prompt
     prompt = f"""
     You are an energy load forecasting assistant. Extract the following parameters from the user query:
     1. Prediction timespan (e.g., next day, next week)
@@ -32,9 +37,11 @@ def parameter_extraction_agent(state: EnergyForecastState):
 
     Query: {last_message.content}
     """
-    
+
+    # Get LLM response
     response = llm.invoke(prompt)
-    
+
+    # Append response to messages and return parameters
     return {
         "messages": [("assistant", response)],
         "parameters": response  # Will be parsed by next agent
